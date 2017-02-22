@@ -50,34 +50,53 @@ display_step = 1
 
 
 def conv_fwd(x, w, b, conv_param):
+
+    """
+    - x: Input data of shape (N, C, H, W)
+    - w: Filter weights of shape (F, C, HH, WW)
+    - b: Biases, of shape (F,)
+    - conv_param: A dictionary with the following keys:
+        - 'stride': The number of pixels between adjacent receptive fields in the
+            horizontal and vertical directions.
+        - 'pad': The number of pixels that will be used to zero-pad the input.
+
+    Returns a tuple of:
+    - out: Output data, of shape (N, F, H', W') where H' and W' are given by
+        H' = 1 + (H + 2 * pad - HH) / stride
+        W' = 1 + (W + 2 * pad - WW) / stride
+    - cache: (x, w, b, conv_param)
+    """
     with tf.Session() as sess:
         X = tf.constant(x, dtype="float")
         W = tf.constant(w, dtype="float")
         B = tf.constant(b, dtype="float")
 
-        print([conv_param['stride'],
-               conv_param['stride'], conv_param['stride'], conv_param['stride']])
-        conv_ = tf.nn.conv2d(X, W,
-                             strides=[1,
-                                      conv_param['stride'], conv_param['stride'], 1],
-                             padding='SAME')+B
+        X_trans = tf.transpose(X, perm=[0, 2, 3, 1]) # [N, C, H, W] =>[N, H, W, C]
+        W_trans = tf.transpose(W, perm=[2, 3, 1, 0]) # [F, C, HH, WW] => [HH, WW, C, F]
 
-        return sess.run(conv_)
+        conv_ = tf.nn.conv2d(X, W,
+                             strides=[1, conv_param['stride'], conv_param['stride'], 1],
+                             padding='SAME')
+        res = sess.run(conv_)
+        print(res.shape)
+        conv_trans = tf.transpose(res, perm=[0,3,1,2])
+        print(sess.run(conv_trans).shape)
+
+        return sess.run(conv_trans)
 
 """Given an input tensor of shape `[batch, in_height, in_width, in_channels]`
 and a filter / kernel tensor of shape
 `[filter_height, filter_width, in_channels, out_channels]` """
-x_shape = (2, 4, 4, 3)  # batch, height, width, channel
-w_shape = (4, 4, 3, 3) # height, width, channel, output
+x_shape = (2, 3, 4, 4)  # batch, channel, width, channel
+w_shape = (3, 3, 4, 4) # height, width, channel, output
 x = np.linspace(-0.1, 0.5, num=np.prod(x_shape)).reshape(x_shape)
 w = np.linspace(-0.2, 0.3, num=np.prod(w_shape)).reshape(w_shape)
-
 
 
 b = np.linspace(-0.1, 0.2, num=3)
 
 conv_param = {'stride': 2, 'pad': 1}
-# out, _ = conv_fwd(x, w, b, conv_param)
+out= conv_fwd(x, w, b, conv_param)
 # print(out)
 
 
@@ -98,10 +117,16 @@ X2 = tf.transpose(X1, perm=[0, 2, 3, 1])
 W2 = tf.transpose(W1, perm=[3, 2, 0, 1])
 
 v3, v4 = sess.run([X2, W2])
-print(v1.shape)
-print(v3.shape)
-print(v2.shape)
-print(v4.shape)
+# print(v1.shape)
+# print(v3.shape)
+# print(v2.shape)
+# print(v4.shape)
+
+
+matrix = np.array([ [[1,2,3], [4, 5, 6]], [[7,8,9],[10, 11,12]]])
+matrix.shape
+matrix.transpose()
+
 
 
 
