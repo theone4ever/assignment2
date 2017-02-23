@@ -1,4 +1,6 @@
 import numpy as np
+import tensorflow as tf
+
 
 
 def affine_forward(x, w, b):
@@ -325,6 +327,7 @@ def dropout_backward(dout, cache):
   return dx
 
 
+
 def conv_forward_naive(x, w, b, conv_param):
   """
   A naive implementation of the forward pass for a convolutional layer.
@@ -346,19 +349,24 @@ def conv_forward_naive(x, w, b, conv_param):
   - out: Output data, of shape (N, F, H', W') where H' and W' are given by
     H' = 1 + (H + 2 * pad - HH) / stride
     W' = 1 + (W + 2 * pad - WW) / stride
-  - cache: (x, w, b, conv_param)
   """
-  out = None
-  #############################################################################
-  # TODO: Implement the convolutional forward pass.                           #
-  # Hint: you can use the function np.pad for padding.                        #
-  #############################################################################
-  pass
-  #############################################################################
-  #                             END OF YOUR CODE                              #
-  #############################################################################
-  cache = (x, w, b, conv_param)
-  return out, cache
+  with tf.Session() as sess:
+    X = tf.constant(x, dtype="float")
+    W = tf.constant(w, dtype="float")
+    B = tf.constant(b, dtype="float")
+
+    X_trans = tf.transpose(X, perm=[0, 2, 3, 1]) # [N, C, H, W] =>[N, H, W, C]
+    W_trans = tf.transpose(W, perm=[2, 3, 1, 0]) # [F, C, HH, WW] => [HH, WW, C, O]
+
+
+    conv_ = tf.nn.conv2d(X_trans, W_trans,
+                         strides=[1, conv_param['stride'], conv_param['stride'], 1],
+                         padding='SAME')+B # [b, H, W, O]
+
+
+    print(sess.run(conv_).shape)
+    conv_trans = tf.transpose(conv_, perm=[0,3,1,2])
+    return sess.run(conv_trans)
 
 
 def conv_backward_naive(dout, cache):
@@ -398,18 +406,24 @@ def max_pool_forward_naive(x, pool_param):
 
   Returns a tuple of:
   - out: Output data
-  - cache: (x, pool_param)
   """
-  out = None
-  #############################################################################
-  # TODO: Implement the max pooling forward pass                              #
-  #############################################################################
-  pass
-  #############################################################################
-  #                             END OF YOUR CODE                              #
-  #############################################################################
-  cache = (x, pool_param)
-  return out, cache
+  """
+  - x: Input data of shape (N, C, H, W)
+  - pool_param: A dictionary with the following keys:
+      - 'pool_width':
+      - 'pool_height':
+      - 'stride':
+
+  Returns a tuple of:
+  - out: Output data, of shape (N, C, H, W) where H' and W' are given by
+  """
+  with tf.Session() as sess:
+    X = tf.constant(x, dtype="float")
+    X_trans = tf.transpose(X, perm=[0, 2, 3, 1])
+    pooling = tf.nn.max_pool(X_trans, ksize=[1, pool_param['pool_height'], pool_param['pool_width'], 1], strides=[1,pool_param['stride'],pool_param['stride'], 1], padding='SAME')
+    pooling_trans = tf.transpose(pooling, perm=[0, 3, 1,2])  # [b, H, W, C]  =>  (b, C, H, W)
+  return sess.run(pooling_trans)
+
 
 
 def max_pool_backward_naive(dout, cache):
