@@ -22,16 +22,18 @@ def affine_forward(x, w, b):
   - cache: (x, w, b)
   """
   out = None
-  #############################################################################
-  # TODO: Implement the affine forward pass. Store the result in out. You     #
-  # will need to reshape the input into rows.                                 #
-  #############################################################################
-  pass
-  #############################################################################
-  #                             END OF YOUR CODE                              #
-  #############################################################################
-  cache = (x, w, b)
-  return out, cache
+
+  with tf.Session() as sess:
+    X = tf.placeholder(shape=[None, None, None, None], dtype='float')
+    W = tf.placeholder(shape=[None, None], dtype='float')
+    B = tf.placeholder(shape=[None], dtype='float')
+
+    X_2d = tf.reshape(X, [X.shape[0], X.shape[1]*X.shape[2]*X.shape[3]])
+
+    fc = tf.multiply(X_2d, W)+B
+
+    out = sess.run(fc, feed_dict={X: x, W: w, B:b})
+    return out
 
 
 def affine_backward(dout, cache):
@@ -73,15 +75,12 @@ def relu_forward(x):
   - cache: x
   """
   out = None
-  #############################################################################
-  # TODO: Implement the ReLU forward pass.                                    #
-  #############################################################################
-  pass
-  #############################################################################
-  #                             END OF YOUR CODE                              #
-  #############################################################################
-  cache = x
-  return out, cache
+
+  with tf.Session() as sess:
+    X = tf.placeholder(dtype='float')
+    X_relu = tf.nn.relu(X)
+    out = sess.run(X_relu, feed_dict={X: x})
+    return out
 
 
 def relu_backward(dout, cache):
@@ -351,9 +350,9 @@ def conv_forward_naive(x, w, b, conv_param):
     W' = 1 + (W + 2 * pad - WW) / stride
   """
   with tf.Session() as sess:
-    X = tf.constant(x, dtype="float")
-    W = tf.constant(w, dtype="float")
-    B = tf.constant(b, dtype="float")
+    X = tf.placeholder(shape=[None, None, None, None], dtype="float")
+    W = tf.placeholder(shape=[None, None, None, None], dtype="float")
+    B = tf.placeholder(shape=[None], dtype="float")
 
     X_trans = tf.transpose(X, perm=[0, 2, 3, 1]) # [N, C, H, W] =>[N, H, W, C]
     W_trans = tf.transpose(W, perm=[2, 3, 1, 0]) # [F, C, HH, WW] => [HH, WW, C, O]
@@ -364,9 +363,8 @@ def conv_forward_naive(x, w, b, conv_param):
                          padding='SAME')+B # [b, H, W, O]
 
 
-    print(sess.run(conv_).shape)
     conv_trans = tf.transpose(conv_, perm=[0,3,1,2])
-    return sess.run(conv_trans)
+    return sess.run(conv_trans, feed_dict={X:x, W:w, B:b})
 
 
 def conv_backward_naive(dout, cache):
@@ -418,11 +416,11 @@ def max_pool_forward_naive(x, pool_param):
   - out: Output data, of shape (N, C, H, W) where H' and W' are given by
   """
   with tf.Session() as sess:
-    X = tf.constant(x, dtype="float")
+    X = tf.placeholder(shape=[None, None, None, None], dtype="float")
     X_trans = tf.transpose(X, perm=[0, 2, 3, 1])
     pooling = tf.nn.max_pool(X_trans, ksize=[1, pool_param['pool_height'], pool_param['pool_width'], 1], strides=[1,pool_param['stride'],pool_param['stride'], 1], padding='SAME')
     pooling_trans = tf.transpose(pooling, perm=[0, 3, 1,2])  # [b, H, W, C]  =>  (b, C, H, W)
-  return sess.run(pooling_trans)
+  return sess.run(pooling_trans, feed_dict={X: x})
 
 
 
